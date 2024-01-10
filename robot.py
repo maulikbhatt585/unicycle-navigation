@@ -28,10 +28,15 @@ class robot:
         omega = self.data["K_p"]*math.atan2(math.sin(phi_d - self.phi), math.cos(phi_d - self.phi))     # Only P part of a PID controller to give omega as per desired heading
         return [v, omega]
 
-    def avoid_obst(self, obstX):
+    def avoid_obst(self, obstX, obs_radius):
         e = obstX - self.X     # error in position
-        K = self.data["vmax"] * (1 - np.exp(- self.data["ao_scaling"] * np.linalg.norm(e)**2)) / np.linalg.norm(e)      # Scaling for velocity
+        K = self.data["vmax"] * (1 - np.exp(- self.data["ao_scaling"] * (np.linalg.norm(e)-obs_radius)**2)) / (np.linalg.norm(e)-obs_radius)      # Scaling for velocity
         v = np.linalg.norm(K * e)   # Velocity decreases as bot gets closer to obstacle
-        phi_d = -math.atan2(e[1], e[0]) # Desired heading
+        phi_d = math.atan2(-e[0], e[1]) # Desired heading
         omega = self.data["K_p"]*math.atan2(math.sin(phi_d - self.phi), math.cos(phi_d - self.phi))     # Only P part of a PID controller to give omega as per desired heading
+        # omega = self.data["K_p"]*(phi_d - self.phi)
+
+        # angle_to_obstacle = np.arctan2(e[1], e[0])
+        # angle_difference = angle_to_obstacle - self.phi%(2*math.pi)
+        # omega = self.data["K_p"]*np.sign(angle_difference) * min(1.0, abs(angle_difference))
         return [v, omega]
